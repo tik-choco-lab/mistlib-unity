@@ -1,0 +1,51 @@
+{
+  "name": "com.tik-choco.mistlib",
+  "version": "0.6.2",
+  "displayName": "MistLib",
+  "description": "Unity bindings and desktop native plug-ins for MistLib.",
+  "unity": "6000.0",
+  "documentationUrl": "https://github.com/tik-choco-lab/mistlib-unity/blob/main/README.md",
+  "changelogUrl": "https://github.com/tik-choco-lab/mistlib-unity/blob/main/Packages/com.tik-choco.mistlib/CHANGELOG.md",
+  "licensesUrl": "https://github.com/tik-choco-lab/mistlib-unity/blob/main/Packages/com.tik-choco.mistlib/LICENSE.md",
+  "keywords": [
+    "networking",
+    "peer-to-peer",
+    "webrtc"
+  ],
+  "author": {
+    "name": "tik-choco-lab",
+    "url": "https://github.com/tik-choco-lab"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tik-choco-lab/mistlib-unity.git"
+  },
+  "files": [
+    "Runtime",
+    "Runtime.meta",
+    "Tests",
+    "Tests.meta",
+    "Samples~",
+    "LICENSES",
+    "LICENSES.meta",
+    "CHANGELOG.md",
+    "CHANGELOG.md.meta",
+    "LICENSE.md",
+    "LICENSE.md.meta",
+    "Third Party Notices.md",
+    "Third Party Notices.md.meta",
+    "package.json.meta"
+  ],
+  "samples": [
+    {
+      "displayName": "Capsule Sync",
+      "description": "Two capsules in one room: a local capsule you drive and a peer capsule placed from the positions MistLib reports.",
+      "path": "Samples~/CapsuleSync"
+    },
+    {
+      "displayName": "Basic Room",
+      "description": "Initializes MistLib, joins a room, and receives events.",
+      "path": "Samples~/BasicRoom"
+    }
+  ]
+}

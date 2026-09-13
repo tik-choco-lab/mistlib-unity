@@ -1,0 +1,29 @@
+.DS_Store
+.idea/
+.vscode/
+*.csproj
+*.sln
+*.unityproj
+*.tgz
+dist/
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+UserSettings/
+
+# Local credentials and secret-scan output
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+gitleaks-report.*
+
+# Keep local development documentation out of the public repository
+/Documentation~/

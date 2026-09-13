@@ -1,0 +1,16 @@
+{
+  "name": "TikChoco.MistLib.BasicRoom",
+  "rootNamespace": "TikChoco.MistLib.Samples",
+  "references": [
+    "TikChoco.MistLib"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

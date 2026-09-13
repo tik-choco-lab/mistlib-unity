@@ -1,0 +1,21 @@
+{
+  "name": "TikChoco.MistLib.Editor.Tests",
+  "rootNamespace": "TikChoco.MistLib.Tests",
+  "references": [
+    "TikChoco.MistLib"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

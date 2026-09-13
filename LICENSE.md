@@ -1,0 +1,17 @@
+# Licensing
+
+Different parts of this package are available under different licenses.
+
+| Content | License |
+| --- | --- |
+| C# source, package metadata, documentation, tests, and samples in this repository | Apache License 2.0 |
+| Native MistLib binaries under `Packages/com.tik-choco.mistlib/Runtime/Plugins` | Mozilla Public License 2.0 |
+
+The full license texts are included in:
+
+- `Packages/com.tik-choco.mistlib/LICENSES/Apache-2.0.txt`
+- `Packages/com.tik-choco.mistlib/LICENSES/MPL-2.0.txt`
+
+The source corresponding to the bundled native binaries is MistLib tag `v0.6.2`:
+
+https://github.com/tik-choco-lab/mistlib/tree/v0.6.2
