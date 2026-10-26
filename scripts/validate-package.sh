@@ -153,6 +153,7 @@ for (const name of ['CHANGELOG.md', 'LICENSE.md', 'Third Party Notices.md', 'pac
 }
 for (const item of entries) {
   if (/(^|\/)\.(git|github|env)(\/|\.|$)/.test(item) || item.startsWith('scripts/') ||
+      ['Justfile', 'RELEASING.md'].includes(item) ||
       (/^README(?:\.[a-z]+)?\.md(?:\.meta)?$/.test(item))) {
     throw new Error(`development or private file included in tarball: ${item}`);
   }

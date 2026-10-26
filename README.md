@@ -8,6 +8,8 @@ English · [日本語](README.ja.md) · [简体中文](README.zh.md)
 
 </div>
 
+Maintainers: see [RELEASING.md](RELEASING.md) for the release flow.
+
 Unity Package Manager bindings for [MistLib](https://github.com/tik-choco-lab/mistlib), with a C# API
 and bundled MistLib engine 0.7.1. The package and engine versions both use 0.7.1.
 Peers communicate through WebRTC data channels and find each other through Nostr relays. The engine
