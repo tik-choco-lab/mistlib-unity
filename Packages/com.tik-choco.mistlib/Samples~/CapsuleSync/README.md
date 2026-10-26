@@ -4,6 +4,8 @@ Two capsules in one MistLib room. The blue capsule is the local node and follows
 capsule is a peer, placed at the position MistLib reports for that node. Each capsule carries its
 node ID and coordinates, so the two windows can be compared directly.
 
+This sample requires exactly engine 0.7.1, bundled with package 0.7.1.
+
 ## Run it
 
 1. Add `CapsuleSyncExample` to an empty GameObject in any scene. The ground, markers, camera, light,
@@ -37,7 +39,7 @@ Launching the same player twice differs by platform:
 Two different components can share a room the same way, as long as each runs in its own process: the
 restriction is one `MistClient` per process, not one behaviour per room.
 
-The 0.6.2 engine cannot unload its native runtime, so repeated Play Mode sessions in one Editor
+The 0.7.1 engine cannot unload its native runtime, so repeated Play Mode sessions in one Editor
 process are not supported. Restart the Editor (and any virtual players) between runs if a node stops
 producing events.
 
@@ -80,3 +82,10 @@ The sample runs on the engine's default Nostr signaling, so both processes need 
 WebSocket access, and a peer can take a few seconds to appear after Play Mode starts. A deployment
 that wants its own discovery scope sets `signaling.nostr.relays`, `inviteSalt`, and `inviteCode` in
 `Config Json`.
+
+The HUD starts at `joining` and waits for `RoomJoined` (10) before publishing positions. It shows
+the UTF-8 reason for `RoomJoinFailed` (11) and stops publishing after a failed join or `RoomLeft`
+(12). Room events are filtered by `RoomId` before sender checks because their sender is empty.
+`PeerConnected` (2) and `PeerDisconnected` (3) activate/hide individual peers; `AllConnectionsLost`
+(9) hides all peers immediately, including when its sender is the local node. A reconnect can
+activate peers again. Leaving the room also hides all peer capsules.

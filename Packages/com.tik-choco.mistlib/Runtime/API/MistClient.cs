@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Threading;
 using UnityEngine;
@@ -13,7 +12,6 @@ namespace TikChoco.MistLib
         private static readonly object GlobalLock = new object();
         private static MistClient activeClient;
 
-        private readonly HashSet<string> joinedRooms = new HashSet<string>(StringComparer.Ordinal);
         private int ownerThreadId;
         private bool disposed;
 
@@ -24,6 +22,18 @@ namespace TikChoco.MistLib
         public string NodeId { get; private set; }
         public string NativeVersion { get; private set; }
         public string NativeBuildInfoJson { get; private set; }
+
+        public static string GetNativeVersion()
+        {
+            EnsureSupportedRuntime();
+            return NativeBuffer.ReadSizedUtf8(MistNative.get_version);
+        }
+
+        public static string GetNativeBuildInfoJson()
+        {
+            EnsureSupportedRuntime();
+            return NativeBuffer.ReadSizedUtf8(MistNative.get_build_info);
+        }
 
         public void Initialize(MistClientOptions options)
         {
@@ -50,10 +60,9 @@ namespace TikChoco.MistLib
 
             try
             {
-                EnsureSupportedRuntime();
                 ownerThreadId = Thread.CurrentThread.ManagedThreadId;
-                NativeVersion = NativeBuffer.ReadSizedUtf8(MistNative.get_version);
-                NativeBuildInfoJson = NativeBuffer.ReadSizedUtf8(MistNative.get_build_info);
+                NativeVersion = GetNativeVersion();
+                NativeBuildInfoJson = GetNativeBuildInfoJson();
                 if (!string.Equals(NativeVersion, MistVersion.Engine, StringComparison.Ordinal))
                 {
                     throw new MistNativeException(
@@ -112,7 +121,6 @@ namespace TikChoco.MistLib
             RequireNonEmpty(roomId, nameof(roomId));
             var bytes = NativeBuffer.Utf8(roomId);
             NativeBuffer.WithInput(bytes, MistNative.join_room);
-            joinedRooms.Add(roomId);
         }
 
         public void LeaveRoom(string roomId)
@@ -121,7 +129,12 @@ namespace TikChoco.MistLib
             RequireNonEmpty(roomId, nameof(roomId));
             var bytes = NativeBuffer.Utf8(roomId);
             NativeBuffer.WithInput(bytes, MistNative.leave_room_id);
-            joinedRooms.Remove(roomId);
+        }
+
+        public void LeaveAllRooms()
+        {
+            RequireInitialized();
+            MistNative.leave_all_rooms();
         }
 
         public void UpdatePosition(Vector3 position, string roomId = null)
@@ -263,16 +276,11 @@ namespace TikChoco.MistLib
             {
                 if (IsInitialized)
                 {
-                    foreach (var roomId in new List<string>(joinedRooms))
-                    {
-                        var bytes = NativeBuffer.Utf8(roomId);
-                        NativeBuffer.WithInput(bytes, MistNative.leave_room_id);
-                    }
+                    MistNative.leave_all_rooms();
                 }
             }
             finally
             {
-                joinedRooms.Clear();
                 IsInitialized = false;
                 MistNativeCallbacks.Deactivate();
                 lock (GlobalLock)
@@ -368,7 +376,7 @@ namespace TikChoco.MistLib
             if (!supported)
             {
                 throw new PlatformNotSupportedException(
-                    "MistLib 0.6.2 supports Windows x86_64, Linux x86_64, and macOS ARM64 only. " +
+                    "MistLib " + MistVersion.Engine + " supports Windows x86_64, Linux x86_64, and macOS ARM64 only. " +
                     "Current process architecture: " + architecture + ".");
             }
         }

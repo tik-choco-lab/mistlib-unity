@@ -12,6 +12,6 @@ The full license texts are included in:
 - `Packages/com.tik-choco.mistlib/LICENSES/Apache-2.0.txt`
 - `Packages/com.tik-choco.mistlib/LICENSES/MPL-2.0.txt`
 
-The source corresponding to the bundled native binaries is MistLib tag `v0.6.2`:
+The source corresponding to the bundled native binaries is MistLib tag `v0.7.1`:
 
-https://github.com/tik-choco-lab/mistlib/tree/v0.6.2
+https://github.com/tik-choco-lab/mistlib/tree/v0.7.1

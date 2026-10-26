@@ -9,14 +9,14 @@
 </div>
 
 这是通过 Unity Package Manager 使用 [MistLib](https://github.com/tik-choco-lab/mistlib) 的绑定包，
-包含 C# API 和 MistLib 0.6.2 原生库。节点通过 Nostr 中继发现彼此，通过 WebRTC 数据通道通信。
+提供 C# API 并捆绑 MistLib 引擎 0.7.1；包版本和引擎版本均为 0.7.1。节点通过 Nostr 中继发现彼此，通过 WebRTC 数据通道通信。
 引擎根据 3D 空间中的距离管理兴趣区域（AOI）和节点连接。
 
 ## 开发状态
 
-此包处于**实验阶段**。0.6.2 原生 ABI 没有关闭运行时或注销回调的函数。
+此包处于**实验阶段**。0.7.1 原生 ABI 没有关闭运行时或注销回调的函数。
 每个进程只能使用一个已初始化的客户端；不支持在同一个 Editor 进程中反复进入 Play Mode，也不支持托管域重载。
-请在两次运行之间重启 Editor。`Dispose()` 会退出该客户端加入的房间并停止向托管端分发事件，
+请在两次运行之间重启 Editor。`Dispose()` 会退出所有房间并停止向托管端分发事件，
 但原生运行时会一直保留到进程退出。
 
 ## 环境要求
@@ -49,7 +49,7 @@ UPM 包位于 `Packages/com.tik-choco.mistlib/`。仓库 README 和开发脚本�
 ```
 
 `#` 后面用于指定 Git 分支、标签或提交。如需使用开发分支，请改为 `#develop`。
-`#v0.6.2` 这样的版本引用仅在对应标签已创建时可用。
+`#v0.7.1` 这样的版本引用仅在对应标签已创建时可用。
 使用分支引用时，更新包会获取该分支的变更；如需固定版本，请指定提交哈希。
 
 ## 最小用法
@@ -85,6 +85,39 @@ public sealed class RoomExample : MonoBehaviour
 原生回调的数据会复制到托管队列中。`PumpCallbacks()` 在调用 `Initialize` 的线程上分发回调，
 通常是 Unity 主线程。也可以使用 `MistRuntimeHost` 管理客户端，并从 `Update` 自动处理回调。
 
+`client.LeaveRoom("lobby")` 退出一个房间；`client.LeaveAllRooms()` 退出所有房间。
+`Dispose()` 也会退出所有房间。0.7.1 的 C ABI 仍使用 `leave_room_id` 退出单个房间；
+已弃用的原生 `leave_room()` 不接受参数，会退出所有房间。
+
+`SendMessage` 接受以下 `MistDeliveryMethod` 值：
+
+| 值 | 代码 | 传递方式 |
+| --- | --- | --- |
+| `ReliableOrdered` | 0 | 可靠，保持顺序 |
+| `UnreliableOrdered` | 1 | 可能丢失消息，保持顺序 |
+| `Unreliable` | 2 | 可能丢失消息或乱序 |
+| `ReliableUnordered` | 3 | 可靠，无顺序保证；对不支持的节点回退到可靠有序传递 |
+
+`MistClient.GetNativeVersion()` 和 `MistClient.GetNativeBuildInfoJson()` 无需初始化客户端即可查询
+已加载的库。初始化后可通过 `client.NativeVersion` 和 `client.NativeBuildInfoJson` 获取版本和
+具体构建信息。初始化要求引擎版本为 0.7.1。
+
+## 引擎 0.7.1 的事件
+
+`MistEventType` 使用 native/wasm 统一的应用事件代码 0–12。包版本 0.7.1 将 `Join` 重命名为
+`PeerConnected`（2），将 `Leave` 重命名为 `PeerDisconnected`（3），以区分节点连接与房间生命周期，
+不保留兼容别名。`AreaOfInterest*` 的名称和值保持不变。
+新增 `RoomJoined`（10）、`RoomJoinFailed`（11）和 `RoomLeft`（12）。
+完整代码及负载表见[英文版](README.md#events-in-engine-071)。
+
+每个事件都通过 `RoomId` 标识房间。房间事件的 `FromNodeId` 为空。
+`Initialize` 启动加入流程，应通过 `RoomJoined` 确认就绪；失败或启动取消通过 `RoomJoinFailed`
+携带 UTF-8 原因，退出清理完成后通过 `RoomLeft` 通知。
+节点连接、断开与 AOI 进入、离开的负载分别为固定字符串 `joined`、`left`、`entered`、`left`。
+`NodePositionUpdated`（7）在每次 AOI tick 发送位置 JSON。
+`AllConnectionsLost`（9）在已有连接的会话变为空时通知一次，重新连接后可再次触发；
+初始空房间或显式退出不会触发。100/101 属于独立的 wasm 媒体回调，本原生包装器不公开这些事件。
+
 ## 示例
 
 在 Package Manager 窗口中导入示例。
@@ -113,6 +146,10 @@ client.Initialize(new MistClientOptions
 省略的键使用原生默认值。`GetConfigJson()` 返回解析后的完整配置，其中也包含已配置的凭据。
 未知的键会被拒绝。`SignalingUrl` 用于选择旧版 WebSocket 传输，不能与非空 `ConfigJson` 同时使用。
 
+0.7.1 默认启用 CP50 存储传输设置，包括可靠无序的批量传输和自适应节奏控制。
+可通过扁平配置 JSON 的 `storageTransfer` 或完整配置 JSON 的 `storage.transfer` 覆盖设置；
+省略的键保留引擎默认值。
+
 如需自己的节点发现范围，请配置 `signaling.nostr.relays`、`inviteSalt` 和 `inviteCode`。
 节点之间的邀请配置必须一致。如果显式指定公共中继，却仍使用引擎内置的占位邀请参数，引擎会拒绝该配置。
 默认配置会连接外部中继列表和 STUN 服务，可用于试运行示例；实际部署时请审查连接目标和配置。
@@ -124,9 +161,11 @@ client.Initialize(new MistClientOptions
 
 ## 原生引擎与许可证
 
-捆绑的二进制文件来自 MistLib 的 `v0.6.2` GitHub Release。初始化时会检查原生版本是否与包的引擎版本一致。
-上游二进制文件及其 SHA-256 摘要见
-[MistLib v0.6.2 发行版](https://github.com/tik-choco-lab/mistlib/releases/tag/v0.6.2)。
+捆绑的 Linux x86_64、Windows x86_64 和 macOS ARM64 库来自官方
+[MistLib v0.7.1 发行版](https://github.com/tik-choco-lab/mistlib/releases/tag/v0.7.1)。
+初始化要求引擎版本精确为 0.7.1，与包版本一致。
+可使用 `scripts/fetch-engine.sh 0.7.1` 获取产物。`bash scripts/validate-package.sh` 检查包结构、
+版本声明是否一致、原生导出符号以及三个 SHA-256 摘要。
 
 Unity 托管绑定、示例和文档采用 **Apache-2.0**，MistLib 原生引擎采用 **MPL-2.0**。
 其依赖库分别适用各自的许可证。请参阅 [LICENSE.md](LICENSE.md)、[LICENSES](Packages/com.tik-choco.mistlib/LICENSES) 和

@@ -25,7 +25,7 @@ namespace TikChoco.MistLib.Samples
                 ConfigJson = configJson,
                 InitialRoom = roomId
             });
-            Debug.Log($"MistLib node {client.NodeId} joined {roomId}.");
+            Debug.Log($"MistLib {client.NativeVersion}: node {client.NodeId} joining {roomId}.");
         }
 
         private void Update()
@@ -45,12 +45,37 @@ namespace TikChoco.MistLib.Samples
             client?.SendMessage(
                 string.Empty,
                 Encoding.UTF8.GetBytes("hello from Unity"),
-                MistDeliveryMethod.ReliableOrdered,
+                MistDeliveryMethod.ReliableUnordered,
                 roomId);
+        }
+
+        [ContextMenu("Leave Room")]
+        private void LeaveRoom()
+        {
+            client?.LeaveRoom(roomId);
+        }
+
+        [ContextMenu("Leave All Rooms")]
+        private void LeaveAllRooms()
+        {
+            client?.LeaveAllRooms();
         }
 
         private static void OnMistEvent(MistEvent item)
         {
+            switch (item.Type)
+            {
+                case MistEventType.RoomJoined:
+                    Debug.Log($"MistLib room joined: {item.RoomId}");
+                    return;
+                case MistEventType.RoomJoinFailed:
+                    Debug.LogError($"MistLib room join failed: {item.RoomId}: {Encoding.UTF8.GetString(item.Data)}");
+                    return;
+                case MistEventType.RoomLeft:
+                    Debug.Log($"MistLib room left: {item.RoomId}");
+                    return;
+            }
+
             Debug.Log($"MistLib event={item.Type} room={item.RoomId} from={item.FromNodeId} bytes={item.Data.Length}");
         }
 

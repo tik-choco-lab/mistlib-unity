@@ -12,9 +12,9 @@ grep -Fq "public const string Package = \"$version\";" Runtime/API/MistVersion.c
 grep -Fq "public const string Engine = \"$version\";" Runtime/API/MistVersion.cs
 
 sha256sum -c <<'CHECKSUMS'
-54d8c0acf543094721c60ae622be3e806cec607ccb0fefa2a30b99cafa2eca32  Runtime/Plugins/Linux/x86_64/libmistlib.so
-b4065ed2cf7aa82730a47d044ebe1962f353a56885a4537c58e92de093e18803  Runtime/Plugins/Windows/x86_64/mistlib.dll
-19114c0a0b98c189077c51249f13929d7f562cc923f6299ecd3f7fe7c620bdbe  Runtime/Plugins/macOS/ARM64/libmistlib.dylib
+2798382717869d1c37b175856e456f90d6f432f9c1730e4eff81346c2ca865af  Runtime/Plugins/Linux/x86_64/libmistlib.so
+db7033cbc74b2ba3d87afab70a67fc746930406da2ceff475e71803664e9246d  Runtime/Plugins/Windows/x86_64/mistlib.dll
+124f8c7964ac1ae6db9aa5c8589372853efd3fbf58b912499e8329911f1251f9  Runtime/Plugins/macOS/ARM64/libmistlib.dylib
 CHECKSUMS
 
 required_symbols=(
@@ -24,6 +24,7 @@ required_symbols=(
   init_with_config
   join_room
   leave_room_id
+  leave_all_rooms
   register_event_callback_v2
   register_log_callback
   update_position

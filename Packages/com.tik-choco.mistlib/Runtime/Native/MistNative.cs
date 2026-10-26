@@ -51,6 +51,10 @@ namespace TikChoco.MistLib
         internal static extern void join_room(IntPtr roomId, UIntPtr roomIdLength);
 
         [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void leave_all_rooms();
+
+        // The 0.7.1 ABI still uses this deprecated symbol for a single room.
+        [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void leave_room_id(IntPtr roomId, UIntPtr roomIdLength);
 
         [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl)]

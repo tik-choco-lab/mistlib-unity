@@ -49,6 +49,7 @@ namespace TikChoco.MistLib.Samples
         private GUIStyle tagStyle;
         private float sendTimer;
         private long positionSequence;
+        private bool roomJoined;
         private string status = "starting";
 
         /// <summary>
@@ -94,8 +95,8 @@ namespace TikChoco.MistLib.Samples
             // Offset the start position so two processes on one machine do not overlap exactly.
             var start = new Vector3(UnityEngine.Random.Range(-3f, 3f), 1f, UnityEngine.Random.Range(-3f, 3f));
             local = SyncedCapsule.Create(client.NodeId, true, start, LocalColor, smoothing, root);
-            status = "joined " + roomId;
-            Debug.Log($"CapsuleSync node {client.NodeId} joined {roomId}.");
+            status = "joining " + roomId;
+            Debug.Log($"CapsuleSync node {client.NodeId} joining {roomId}.");
         }
 
         private void Update()
@@ -107,7 +108,10 @@ namespace TikChoco.MistLib.Samples
 
             client.PumpCallbacks();
             MoveLocalCapsule();
-            PublishLocalPosition();
+            if (roomJoined)
+            {
+                PublishLocalPosition();
+            }
             RemoveSilentPeers();
         }
 
@@ -171,6 +175,41 @@ namespace TikChoco.MistLib.Samples
 
         private void OnMistEvent(MistEvent item)
         {
+            if (!string.Equals(item.RoomId, roomId, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            // Room events have no sender; connection loss identifies this node instead of a peer.
+            // Handle both before filtering peer events by FromNodeId.
+            switch (item.Type)
+            {
+                case MistEventType.RoomJoined:
+                    roomJoined = true;
+                    status = "joined " + item.RoomId;
+                    return;
+                case MistEventType.RoomJoinFailed:
+                    roomJoined = false;
+                    status = "join failed: " + Encoding.UTF8.GetString(item.Data);
+                    HidePeers();
+                    Debug.LogError($"CapsuleSync {item.RoomId}: {status}");
+                    return;
+                case MistEventType.RoomLeft:
+                    roomJoined = false;
+                    status = "left " + item.RoomId;
+                    HidePeers();
+                    return;
+                case MistEventType.AllConnectionsLost:
+                    status = "all connections lost in " + item.RoomId;
+                    HidePeers();
+                    return;
+            }
+
+            if (!roomJoined)
+            {
+                return;
+            }
+
             if (string.IsNullOrEmpty(item.FromNodeId) ||
                 string.Equals(item.FromNodeId, client.NodeId, StringComparison.Ordinal))
             {
@@ -179,12 +218,13 @@ namespace TikChoco.MistLib.Samples
 
             switch (item.Type)
             {
-                case MistEventType.Join:
+                case MistEventType.PeerConnected:
                 case MistEventType.AreaOfInterestEntered:
+                    status = "joined " + item.RoomId;
                     ActivatePeer(item.FromNodeId);
                     break;
 
-                case MistEventType.Leave:
+                case MistEventType.PeerDisconnected:
                 case MistEventType.AreaOfInterestLeft:
                     DeactivatePeer(item.FromNodeId);
                     break;
@@ -247,6 +287,14 @@ namespace TikChoco.MistLib.Samples
 
             capsule.Hide();
             Debug.Log($"CapsuleSync peer hidden: {peerId}");
+        }
+
+        private void HidePeers()
+        {
+            foreach (var peerId in peers.Keys)
+            {
+                DeactivatePeer(peerId);
+            }
         }
 
         private SyncedCapsule GetOrCreatePeer(string peerId)

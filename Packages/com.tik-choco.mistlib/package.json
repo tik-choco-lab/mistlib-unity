@@ -1,8 +1,8 @@
 {
   "name": "com.tik-choco.mistlib",
-  "version": "0.6.2",
+  "version": "0.7.1",
   "displayName": "MistLib",
-  "description": "Unity bindings and desktop native plug-ins for MistLib.",
+  "description": "Unity bindings and desktop native plug-ins for MistLib engine 0.7.1.",
   "unity": "6000.0",
   "documentationUrl": "https://github.com/tik-choco-lab/mistlib-unity/blob/main/README.md",
   "changelogUrl": "https://github.com/tik-choco-lab/mistlib-unity/blob/main/Packages/com.tik-choco.mistlib/CHANGELOG.md",

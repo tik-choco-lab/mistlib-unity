@@ -2,6 +2,33 @@
 
 ## Unreleased
 
+## [0.7.1] - 2026-10-26
+
+- Require exactly MistLib engine 0.7.1; the package version matches the engine version.
+- Breaking: renamed `MistEventType.Join` / `Leave` to `PeerConnected` / `PeerDisconnected` (2 / 3), with no
+  compatibility aliases. The existing `AreaOfInterest*` names and native values 0–9 are unchanged.
+- Added `RoomJoined` (10), `RoomJoinFailed` (11), and `RoomLeft` (12) to the unified application
+  event contract. Media codes 100/101 remain reserved for wasm's separate callback API.
+- Basic Room reports asynchronous join results and completed leaves. Capsule Sync waits for
+  `RoomJoined` before publishing, displays join failures/room exits, and hides peers on room exit
+  or `AllConnectionsLost`; room events are handled before filtering empty/self senders.
+- Pinned all 13 application event values in contract tests and documented the unified payloads.
+- Bundled the official MistLib 0.7.1 release libraries for Linux x86_64, Windows x86_64, and macOS
+  ARM64; updated all three SHA-256 checksums and source/license provenance to tag `v0.7.1`.
+
+## [0.7.0] - 2026-10-26
+
+- Bundled MistLib 0.7.0 for Windows x86_64, Linux x86_64, and macOS ARM64; updated binary checksums
+  and required exports. Initialization still requires an exact engine version match.
+- Added `LeaveAllRooms()` and use native `leave_all_rooms` during disposal. `LeaveRoom(roomId)`
+  continues to use `leave_room_id`, the per-room native entry point in 0.7.0.
+- Added `MistDeliveryMethod.ReliableUnordered` (code 3), with reliable ordered fallback on peers
+  without support, and demonstrated it in Basic Room.
+- Added static `MistClient.GetNativeVersion()` and `GetNativeBuildInfoJson()` queries that do not
+  require client initialization; initialized clients also expose version and build information.
+- The engine now enables the CP50 storage transfer defaults, including reliable unordered bulk
+  transfers and adaptive pacing. Configuration JSON continues to pass through to the engine.
+
 - Moved the UPM package into `Packages/com.tik-choco.mistlib`; Git installs now use
   `?path=Packages/com.tik-choco.mistlib` before the revision fragment. Repository READMEs and
   development scripts remain outside the package and no longer carry Unity metadata.

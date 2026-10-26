@@ -6,14 +6,17 @@ namespace TikChoco.MistLib
     {
         Raw = 0,
         Overlay = 1,
-        Join = 2,
-        Leave = 3,
+        PeerConnected = 2,
+        PeerDisconnected = 3,
         Neighbors = 4,
         AreaOfInterestEntered = 5,
         AreaOfInterestLeft = 6,
         NodePositionUpdated = 7,
         AreaOfInterestNodes = 8,
-        AllConnectionsLost = 9
+        AllConnectionsLost = 9,
+        RoomJoined = 10,
+        RoomJoinFailed = 11,
+        RoomLeft = 12
     }
 
     public sealed class MistEvent
@@ -56,6 +59,8 @@ namespace TikChoco.MistLib
     {
         ReliableOrdered = 0,
         UnreliableOrdered = 1,
-        Unreliable = 2
+        Unreliable = 2,
+        // Falls back to reliable ordered delivery on peers without support.
+        ReliableUnordered = 3
     }
 }

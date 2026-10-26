@@ -9,16 +9,16 @@ English · [日本語](README.ja.md) · [简体中文](README.zh.md)
 </div>
 
 Unity Package Manager bindings for [MistLib](https://github.com/tik-choco-lab/mistlib), with a C# API
-and bundled MistLib 0.6.2 native libraries. Peers communicate through WebRTC data channels and find
-each other through Nostr relays. The engine uses 3D proximity to manage its area of interest and peer
-connections.
+and bundled MistLib engine 0.7.1. The package and engine versions both use 0.7.1.
+Peers communicate through WebRTC data channels and find each other through Nostr relays. The engine
+uses 3D proximity to manage its area of interest and peer connections.
 
 ## Status
 
-This package is **experimental**. The 0.6.2 native ABI has no shutdown or
+This package is **experimental**. The 0.7.1 native ABI has no shutdown or
 callback-unregistration function. Use one initialized client per process; repeated Editor Play Mode
 sessions and managed domain reloads are unsupported. Restart the Editor between sessions.
-`Dispose()` leaves the client's rooms and stops managed event delivery, but the native runtime stays
+`Dispose()` leaves all rooms and stops managed event delivery, but the native runtime stays
 alive until the process exits.
 
 ## Requirements
@@ -53,7 +53,7 @@ Add the `main` branch Git URL through Package Manager or put it in
 ```
 
 The fragment after `#` selects a Git branch, tag, or commit. Use `#develop` to install the
-development branch. A version reference such as `#v0.6.2` works only after that tag exists.
+development branch. A version reference such as `#v0.7.1` works only after that tag exists.
 Branch references follow that branch when you update the package; use a commit hash when you need a
 fixed revision.
 
@@ -92,6 +92,56 @@ Native callbacks are copied into managed queues; `PumpCallbacks()` delivers them
 called `Initialize`, normally Unity's main thread. `MistRuntimeHost` can own the client and pump
 callbacks from `Update` for you.
 
+`client.LeaveRoom("lobby")` leaves one room; `client.LeaveAllRooms()` leaves every room.
+`Dispose()` also leaves every room. In the 0.7.1 C ABI, per-room leave still uses `leave_room_id`;
+the deprecated native `leave_room()` takes no arguments and leaves all rooms.
+
+`SendMessage` accepts these `MistDeliveryMethod` values:
+
+| Value | Code | Delivery |
+| --- | --- | --- |
+| `ReliableOrdered` | 0 | Reliable, in order |
+| `UnreliableOrdered` | 1 | May drop messages, preserves order |
+| `Unreliable` | 2 | May drop or reorder messages |
+| `ReliableUnordered` | 3 | Reliable, may reorder; falls back to reliable ordered on peers without support |
+
+`MistClient.GetNativeVersion()` and `MistClient.GetNativeBuildInfoJson()` query the loaded library
+without initializing a client. After initialization, use `client.NativeVersion` and
+`client.NativeBuildInfoJson` for the version and exact build details. Initialization requires 0.7.1.
+
+## Events in engine 0.7.1
+
+`MistEventType` uses the engine's unified native/wasm application codes. Package 0.7.1 renames
+`Join` to `PeerConnected` and `Leave` to `PeerDisconnected`, without compatibility aliases, to
+separate peer connectivity from room lifecycle. The existing `AreaOfInterest*` names spell out AOI
+and retain their meaning and values.
+
+| Code | `MistEventType` | `FromNodeId` / `Data` |
+| --- | --- | --- |
+| 0 | `Raw` | Sender / application bytes |
+| 1 | `Overlay` | Sender / overlay application bytes (debugging) |
+| 2 | `PeerConnected` | Peer / UTF-8 `joined` |
+| 3 | `PeerDisconnected` | Peer / UTF-8 `left` |
+| 4 | `Neighbors` | Synthetic `rust` / JSON node array |
+| 5 | `AreaOfInterestEntered` | Node / UTF-8 `entered` |
+| 6 | `AreaOfInterestLeft` | Node / UTF-8 `left` |
+| 7 | `NodePositionUpdated` | Node / JSON `{"x":..,"y":..,"z":..}` on every AOI tick, even without movement |
+| 8 | `AreaOfInterestNodes` | Synthetic `rust` / JSON AOI node array |
+| 9 | `AllConnectionsLost` | Local node / JSON `{"reason":"allConnectionsLost","connectedCount":0}` |
+| 10 | `RoomJoined` | Empty / empty bytes |
+| 11 | `RoomJoinFailed` | Empty / UTF-8 failure or cancellation reason |
+| 12 | `RoomLeft` | Empty / empty bytes |
+
+Every event carries `RoomId` through the native v2 callback. Handle room events before excluding
+empty senders. `Initialize` starts the join; `RoomJoined` reports readiness (also on a rejoin to an
+active room). A canceled startup reports `RoomJoinFailed`; `RoomLeft` reports an active session's
+completed cleanup, once per room when leaving all rooms. `AllConnectionsLost` fires once after a
+tick observes a previously connected session become empty, rearms after reconnection, and does not
+fire for an initially empty room or explicit leave.
+
+Codes 100/101 remain reserved for the separate wasm media callback (`TrackAdded`/`TrackRemoved`);
+this native Unity wrapper has no corresponding media callback and does not add them to `MistEventType`.
+
 ## Samples
 
 Import samples from the Package Manager window.
@@ -122,6 +172,10 @@ Omitted keys keep the native defaults. `GetConfigJson()` returns the resolved co
 any configured credentials. Unknown keys are rejected. `SignalingUrl` selects the legacy WebSocket
 transport and cannot be combined with a non-empty `ConfigJson`.
 
+0.7.1 enables the engine's CP50 storage transfer defaults, including reliable unordered bulk
+transfers and adaptive pacing. Override them through `storageTransfer` in flat configuration JSON
+or `storage.transfer` in full configuration JSON; omitted keys keep the engine defaults.
+
 For your own discovery scope, configure `signaling.nostr.relays`, `inviteSalt`, and `inviteCode`.
 Peers must use matching invite settings. The engine rejects explicitly configured public relays with
 its built-in placeholder invite pair. The defaults connect to external relay-list and STUN services;
@@ -136,9 +190,11 @@ in a distributed Unity player can be extracted, even when kept out of this repos
 
 ## Native engine and license
 
-The bundled binaries are from the MistLib `v0.6.2` GitHub Release. Initialization checks the native
-version against the package engine version. The upstream binaries and their SHA-256 digests are
-available from the [MistLib v0.6.2 release](https://github.com/tik-choco-lab/mistlib/releases/tag/v0.6.2).
+The bundled Linux x86_64, Windows x86_64, and macOS ARM64 libraries are from the official
+[MistLib v0.7.1 release](https://github.com/tik-choco-lab/mistlib/releases/tag/v0.7.1).
+Initialization requires exactly engine 0.7.1, matching the package version.
+`scripts/fetch-engine.sh 0.7.1` fetches these artifacts; `bash scripts/validate-package.sh` checks
+the package structure, matching version declarations, native exports, and all three SHA-256 digests.
 
 The managed Unity bindings, samples, and documentation are **Apache-2.0**. The MistLib native engine is
 **MPL-2.0**; its dependencies have their own licenses. See [LICENSE.md](LICENSE.md),
